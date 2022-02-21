@@ -6,6 +6,7 @@ using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Utilities;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -62,6 +63,9 @@ namespace UnityEngine.InputSystem.UI
             get => m_DeselectOnBackgroundClick;
             set => m_DeselectOnBackgroundClick = value;
         }
+
+        [SerializeField]
+        private bool _deselectOnNonNavigationButtons;
 
         /// <summary>
         /// How to deal with the presence of pointer-type input from multiple devices.
@@ -434,10 +438,15 @@ namespace UnityEngine.InputSystem.UI
                 eventData.useDragThreshold = true;
 
                 var selectHandler = ExecuteEvents.GetEventHandler<ISelectHandler>(currentOverGo);
+                var selectableComponent = GetComponent<Selectable>();
 
                 // If we have clicked something new, deselect the old thing and leave 'selection handling' up
                 // to the press event (except if there's none and we're told to not deselect in that case).
-                if (selectHandler != eventSystem.currentSelectedGameObject && (selectHandler != null || m_DeselectOnBackgroundClick))
+                
+                // If unchecked deselectOnNonNavigationButtons, don't deselect if click was on button without navigation
+                if (selectHandler != eventSystem.currentSelectedGameObject 
+                    && (selectHandler != null || m_DeselectOnBackgroundClick)
+                    && (_deselectOnNonNavigationButtons ||selectableComponent && selectableComponent.navigation.mode != Navigation.Mode.None))
                     eventSystem.SetSelectedGameObject(null, eventData);
 
                 // Invoke OnPointerDown, if present.
